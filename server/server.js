@@ -26,20 +26,24 @@ io.on('connection', (socket) => {
       return callback('Name and room name are required');
     }
 
-    socket.join(params.room);
+    socket.join(params.room.toLowerCase());
     users.removeUser(socket.id);
-    users.addUser(socket.id, params.name, params.room);
-    io.to(params.room).emit('updateUserList', users.getUserList(params.room));
+    var user = users.addUser(socket.id, params.name, params.room);
+    if (user) {
+      io.to(params.room.toLowerCase()).emit('updateUserList', users.getUserList(params.room));
+    } else {
+      return callback('Name not available');
+    }
 
     socket.emit('newMessage', generateMessage('Admin', 'Welcome to chat app'));
-    socket.broadcast.to(params.room).emit('newMessage', generateMessage('Admin', `${params.name} has joined`));
+    socket.broadcast.to(params.room.toLowerCase()).emit('newMessage', generateMessage('Admin', `${params.name} has joined`));
     callback();
   });
 
   socket.on('createMessage', (message, callback) => {
     var user = users.getUser(socket.id);
     if (user && isRealString(message.text)) {
-      io.to(user.room).emit('newMessage', generateMessage(user.name, message.text));
+      io.to(user.room.toLowerCase()).emit('newMessage', generateMessage(user.name, message.text));
     }
     callback();
   });
@@ -47,15 +51,15 @@ io.on('connection', (socket) => {
   socket.on('createLocationMessage', (coords) => {
     var user = users.getUser(socket.id);
     if (user) {
-      io.to(user.room).emit('newLocationMessage', generateLocationMessage(user.name, coords.latitude, coords.longitude));
+      io.to(user.room.toLowerCase()).emit('newLocationMessage', generateLocationMessage(user.name, coords.latitude, coords.longitude));
     }
   });
 
   socket.on('disconnect', () => {
     var user = users.removeUser(socket.id);
     if (user) {
-      io.to(user.room).emit('updateUserList', users.getUserList(user.room));
-      io.to(user.room).emit('newMessage', generateMessage('Admin', `${user.name} has left`));
+      io.to(user.room.toLowerCase()).emit('updateUserList', users.getUserList(user.room));
+      io.to(user.room.toLowerCase()).emit('newMessage', generateMessage('Admin', `${user.name} has left`));
     }
   });
 });

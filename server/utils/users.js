@@ -1,15 +1,14 @@
-[{
-  id: '',
-  name: '',
-  room: ''
-}]
-
 class Users {
   constructor() {
     this.users = [];
   }
 
   addUser(id, name, room) {
+    var usersWithSameName = this.users.filter((user) => (user.name === name && user.room == room));
+    if (usersWithSameName.length > 0) {
+      return ;
+    }
+
     var user = {id, name, room};
     this.users.push(user);
     return user;
@@ -28,7 +27,7 @@ class Users {
   }
 
   getUserList(room) {
-    var users = this.users.filter((user) => user.room === room);
+    var users = this.users.filter((user) => user.room.toUpperCase() === room.toUpperCase());
     return users.map((user) => user.name);
   }
 }
